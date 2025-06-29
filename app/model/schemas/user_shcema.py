@@ -11,6 +11,7 @@ from model.utils import utils_json as json
 
 
 class User(BaseModel):
+    auto_off : bool
     schedule_url: HttpUrl
     login: str
 
@@ -21,6 +22,13 @@ class User(BaseModel):
     def save(self):
         data = self.model_dump(mode='json')
         json.write(PROFILE_JSON, data, "PROFILE_JSON")
+
+    @property
+    def password(self):
+        ...
+
+    def clear(self):
+        ...
     
     class Config:
         extra = "allow"

@@ -81,4 +81,13 @@ def check_installed_app(paths: list[str]) -> str:
         if path.is_file() and os.access(path, os.X_OK):
             return str(path)
     return ""
+
+def prevent_sleep() -> bool:
+    ...
+
+def allow_sleep() -> bool:
+    ...
+
+def system_off(through=300) -> bool:
+    ...
     

@@ -7,10 +7,12 @@ MODEL_DIR = BASE_DIR.joinpath('app', 'model')
 DATA_DIR = MODEL_DIR.joinpath('data')
 DRIVER_FILE = MODEL_DIR.joinpath('drivers', 'geckodriver')
 
-
 PROFILE_JSON = DATA_DIR.joinpath('profile.json')
 LINKS_JSON = DATA_DIR.joinpath('links.json')
 
+PNS_LOGIN_URL = 'https://pns.hneu.edu.ua/login/index.php'
+
+#  Для коректного збереження у файлі json
 MAPPED_TYPE_LESSON = {
     "лекція": "lecture",
     "практ.зан.": "practice",

@@ -1,17 +1,11 @@
-import os
-import sys
-
 import psutil
-
-if __name__ == "__main__":
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-from logger import log
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
+from app.logger import log
 
-class ZoomServices:
+
+class ZoomService:
 
     def __init__(self, web_driver):
         self.__driver = web_driver

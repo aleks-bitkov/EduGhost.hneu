@@ -12,7 +12,7 @@ from model.schemas.scedule_schema import Schedule
 from model.utils.common_utils import get_kyiv_now
 
 
-class ScheduleScraper:
+class ScheduleRepository:
     def __init__(self, url: str):
         if not url:
             log.error('немає посилання на розклад')
