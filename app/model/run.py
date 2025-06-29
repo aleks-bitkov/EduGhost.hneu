@@ -3,7 +3,6 @@
     репозиторіїв та сервесів. Основні процеси запускаються асинхронно завдяки об'єкт класу LessonManager
 """
 import asyncio
-import os
 import time
 from asyncio import CancelledError
 
@@ -11,7 +10,6 @@ from app.logger import log
 from app.model import settings
 from app.model.repositories.pns_repository import PnsRepository
 from app.model.repositories.shedule_repository import ScheduleRepository
-from app.model.schemas.link_schema import Link
 from app.model.schemas.user_shcema import User
 from app.model.services.lesson_manager import LessonManager
 from app.model.services.zoom_service import ZoomService
@@ -43,16 +41,12 @@ class Run:
 
             password = user.password
             schedule_url = user.schedule_url
-            links = Link()
 
             if not password:
                 user.clear()
                 return
             if not schedule_url:
                 log.error('немає посилання для розкладу')
-                return
-            if not links:
-                log.error('немає посиланб для занять')
                 return
 
             utils.prevent_sleep()
@@ -75,15 +69,32 @@ class Run:
 
             zoom = ZoomService(web_driver)
             pns = PnsRepository(username=user.login, password=password, web_driver=web_driver)
-            am = LessonManager(pns, zoom, links, schedule)
+            am = LessonManager(pns, zoom, schedule)
 
 
-            t1 = asyncio.create_task(am.zoom_meet_processing())
-            t2 = asyncio.create_task(am.attendance_processing())
+            t1 = asyncio.create_task(am.zoom_meet_processing(), name="zoom_meet_processing")
+            t2 = asyncio.create_task(am.attendance_processing(), name="attendance_processing")
             Run().tasks = [t1, t2]
 
             try:
-                await asyncio.gather(*Run().tasks)
+                results = await asyncio.gather(*Run().tasks, return_exceptions=True)
+
+
+                for i, result in enumerate(results):
+                    task_name = Run().tasks[i].get_name()
+                    if isinstance(result, Exception):
+                        Run().error = True
+                        log.error(f'задача {task_name} завершилась с ошибкой: {result}')
+                        if isinstance(result, CancelledError):
+                            log.warning(f'задача {task_name} была отменена')
+                        else:
+                            log.exception(f'необработанная ошибка в задаче {task_name}', exc_info=result)
+                        Run().error = True
+                    else:
+                        log.info(f'задача {task_name} завершилась успешно')
+
+
+
             except asyncio.CancelledError:
                 log.warning('було прервано головний потік')
                 for task in Run().tasks:
@@ -106,7 +117,7 @@ class Run:
             if user.auto_off:
                 log.info('відключення ПК відбудеться через 5 хвилин')
                 utils.system_off()
-                os.system('shutdown /s /f /t 300')
+                # os.system('shutdown /s /f /t 300')
             else:
                 log.warning('автоматичне виключення ПК не увімкнено')
                 utils.allow_sleep()
@@ -140,3 +151,5 @@ class Run:
                 pass
             log.info("сценарій було успішно зупинено")
             cls.running = False
+
+asyncio.run(Run().run())

@@ -3,21 +3,24 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import aiohttp
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv
 
 from app.logger import log
+from app.model import settings
 
-load_dotenv(find_dotenv())
+load_dotenv(settings.ENV_PATH)
+
+_cached_time = ""
+_last_fetched = ""
 
 async def get_kyiv_now(format_datetime=False) -> str | datetime:
-    log.info("Запит на київський час...")
+    global _cached_time, _last_fetched
+    log.info("отримання київського часу...")
 
-    _cached_time = ""
-    _last_fetched = ""
     today = datetime.today() #  час девайсу по UTC
 
     if _cached_time and _last_fetched and datetime.now(UTC) - _last_fetched < timedelta(minutes=1):
-        log.debug("використовується кешований час")
+        log.info("використовується кешований час")
         if format_datetime:
             return datetime.strptime(_cached_time, "%Y-%m-%d %H:%M:%S")
         return _cached_time
@@ -91,3 +94,42 @@ def allow_sleep() -> bool:
 def system_off(through=300) -> bool:
     ...
     
+
+def format_time(seconds):
+    """
+    Перетворює секунди у зручний для читання формат українською мовою
+    
+    Args:
+        seconds (int): Кількість секунд
+        
+    Returns:
+        str: Відформатований час
+    """
+    if seconds < 60:
+        return f"{seconds} {'секунда' if seconds == 1 else 'секунди' if 2 <= seconds <= 4 else 'секунд'}"
+    
+    elif seconds < 3600:  # менше години
+        minutes = seconds // 60
+        remaining_seconds = seconds % 60
+        
+        minute_word = 'хвилина' if minutes == 1 else 'хвилини' if 2 <= minutes <= 4 else 'хвилин'
+        result = f"{minutes} {minute_word}"
+        
+        if remaining_seconds > 0:
+            second_word = 'секунда' if remaining_seconds == 1 else 'секунди' if 2 <= remaining_seconds <= 4 else 'секунд'
+            result += f" {remaining_seconds} {second_word}"
+        
+        return result
+    
+    else:  # години
+        hours = seconds // 3600
+        remaining_minutes = (seconds % 3600) // 60
+        
+        hour_word = 'година' if hours == 1 else 'години' if 2 <= hours <= 4 else 'годин'
+        result = f"{hours} {hour_word}"
+        
+        if remaining_minutes > 0:
+            minute_word = 'хвилина' if remaining_minutes == 1 else 'хвилини' if 2 <= remaining_minutes <= 4 else 'хвилин'
+            result += f" {remaining_minutes} {minute_word}"
+        
+        return result

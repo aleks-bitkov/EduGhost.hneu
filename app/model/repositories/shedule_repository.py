@@ -27,6 +27,8 @@ class ScheduleRepository:
         try:
             response = requests.get(self.url)
             return BeautifulSoup(response.text, "lxml")
+        except requests.exceptions.ConnectionError:
+            log.exception("помилка при з'єднанні")
         except Exception:
             log.exception("невідома помилка при отриманні розкладу")
             log.debug("зупинка парсеру...")
@@ -82,6 +84,25 @@ class ScheduleRepository:
         return lesson_data
 
     def generate_schedule(self) -> Schedule | None:
+        lessons=[
+            Lesson
+            (
+                name='ТЕОРІЯ ЙМОВІРНОСТЕЙ ТА МАТЕМАТИЧНА СТАТИСТИКА', 
+                type='laboratory', 
+                start='18:12', 
+                end='23:59'
+            ),
+            Lesson
+            (
+                name='ФІЛОСОФІЯ',
+                type='practice',
+                start='12:10', 
+                end='23:59'
+            )
+        ]
+
+        return Schedule(lessons=lessons)
+
         if self.day_index is None:
             log.error("не знайдено index сьогоднішнього дня")
             log.debug("можлива помилка з сайтом розкладу")
@@ -133,5 +154,4 @@ class ScheduleRepository:
                         log.error('не знайдено відповідності до типу пари, тип пари = %r', subject_type)
 
                     lessons.append(Lesson(name=item["name"], type=subject_type, start=start_time, end=end_time))
-
         return Schedule(lessons=lessons)

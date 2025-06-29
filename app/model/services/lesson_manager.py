@@ -3,11 +3,15 @@ from datetime import datetime
 
 from app.logger import log
 from app.model import settings
+from app.model.repositories.pns_repository import PnsRepository
 from app.model.schemas.lesson_shcema import Lesson
 from app.model.schemas.link_schema import Link
 from app.model.schemas.scedule_schema import Schedule
+from app.model.schemas.user_shcema import User
+from app.model.services.zoom_service import ZoomService
 from app.model.utils import common_utils as utils
 from app.model.utils import utils_json as json
+from app.model.utils.selenium_manager import SeleniumManager
 
 
 class LessonManager:
@@ -59,22 +63,22 @@ class LessonManager:
         try:
             #  Отримання відповідного посилання залежно від типу поточної активності
             if activity_type == "attendance":
-                log_prefix = "to mark"
+                log_prefix = "відмітки"
                 link = self.links[lesson.name][lesson.type]["attendance"]
             elif activity_type == "meeting":
-                log_prefix = "meeting"
+                log_prefix = "відвідування"
                 link = self.links[lesson.name][lesson.type]["zoom"]
             else:
-                log.error("unknown type for %s", lesson.name)
+                log.error("не зрозумілий тип активності для %r", lesson.name)
         except KeyError:
-            log.warning("no link found for %s %r. skipping...", log_prefix, lesson.name)
+            log.warning("пари %r не знайдено у доданих. ігоруємо...", lesson.name)
             return
         except Exception:
-            log.exception("unknown error while getting link for %s", log_prefix)
+            log.exception("невідома помилка під час отримання посилання для %s %r", log_prefix, lesson.name)
             return
 
         if not link:
-            log.warning("no link for %s, %r", log_prefix, lesson.name)
+            log.warning("немає посилання %s для %r. ігноруємо...", log_prefix, lesson.name)
             return
 
         status, now, start, end = await self.get_lesson_status(lesson)
@@ -83,16 +87,16 @@ class LessonManager:
             log.info("%r закіничлася", lesson.name)
             return
         elif status == "error":
-            log.error("помилка при отримані статусу. продовжуємо...")
+            log.error("помилка при отримані статусу. ігноруємо...")
             return
         elif status == "upcoming":
-            log.info("пара %r еще не началась", lesson.name)
+            log.info("пара %r ще не почалась", lesson.name)
+            log.debug("зараз %s, початок о %s", str(start), str(now))
             difference = start - now
             seconds_left = int(difference.total_seconds()) + 300
 
-            log.info("продолжим выполнения скрипта через %d с.", seconds_left)
-            log.debug("ожидаем начала %s...", lesson.name)
-
+            log.info("очікуємо до %s. Залишилось ≈ %s", lesson.start, utils.format_time(seconds_left))
+           
             await asyncio.sleep(seconds_left)
         else:
             pass  # active type 100%
@@ -102,19 +106,18 @@ class LessonManager:
         elif activity_type == "attendance":
             await self.pns.put_a_mark(link, lesson.end)
         else:
-            log.error("unknown activity type as %r", activity_type)
+            log.error("не зрозумілий такий тип як %r", activity_type)
             return
 
-        now = await self.utils.get_kyiv_now(format_datetime=True)
+        now = await utils.get_kyiv_now(format_datetime=True)
         to_end_lesson = int((end - now).total_seconds()) - 900
 
         if to_end_lesson <= 600:
-            log.info("до конца %r оставалось <= 10 минут. Пропускаем данную пару", lesson.name)
+            log.info("до кінця %r залишилось ≤ 10 хвилин. пропускаємо цю пару", lesson.name)
             return
 
         if activity_type == "meeting":
-            log.info("до окончания %r осталось %d с.", lesson.name, to_end_lesson)
-            log.debug("ожидаем конца пары...")
+            log.info("до закінчення %r залишилось %s.", lesson.name, utils.format_time(to_end_lesson))
 
         await asyncio.sleep(to_end_lesson)
 
@@ -127,16 +130,16 @@ class LessonManager:
 
     async def zoom_meet_processing(self):
         if not self.links:
-            log.debug("")
+            log.debug("не отримано посилань")
             return
 
-        for lesson in self.schedule:
+        for lesson in self.lessons:
             await self.handle_lesson_activity(lesson, "meeting")
 
     async def attendance_processing(self):
-        if not self.schedule and not self.links:
-            log.debug("не було ні посилань не розкладу Attendance")
+        if not self.links:
+            log.debug("не отримано посилань")
             return
 
-        for lesson in self.schedule:
+        for lesson in self.lessons:
             await self.handle_lesson_activity(lesson, "attendance")
