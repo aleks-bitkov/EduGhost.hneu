@@ -6,6 +6,7 @@ BASE_DIR = Path.cwd()
 MODEL_DIR = BASE_DIR.joinpath('app', 'model')
 DATA_DIR = MODEL_DIR.joinpath('data')
 DRIVER_FILE = MODEL_DIR.joinpath('drivers', 'geckodriver')
+ENV_PATH = BASE_DIR.joinpath('app', '.env')
 
 PROFILE_JSON = DATA_DIR.joinpath('profile.json')
 LINKS_JSON = DATA_DIR.joinpath('links.json')

@@ -1,13 +1,7 @@
-import os
-import sys
-
-if __name__ == "__main__":
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
 from pydantic import BaseModel, HttpUrl
 
-from model.settings import LINKS_JSON
-from model.utils import utils_json as json
+from app.model.settings import LINKS_JSON
+from app.model.utils import utils_json as json
 
 
 class ClassSession(BaseModel):

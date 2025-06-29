@@ -3,13 +3,13 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
-from logger import log
 from transliterate import translit
 
-from model import settings
-from model.schemas.lesson_shcema import Lesson
-from model.schemas.scedule_schema import Schedule
-from model.utils.common_utils import get_kyiv_now
+from app.logger import log
+from app.model import settings
+from app.model.schemas.lesson_shcema import Lesson
+from app.model.schemas.scedule_schema import Schedule
+from app.model.utils.common_utils import get_kyiv_now
 
 
 class ScheduleRepository:

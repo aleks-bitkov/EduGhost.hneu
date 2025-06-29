@@ -1,13 +1,13 @@
 import os
-import sys
 
-if __name__ == "__main__":
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
+import keyring
+from dotenv import load_dotenv
 from pydantic import BaseModel, HttpUrl
 
-from model.settings import PROFILE_JSON
-from model.utils import utils_json as json
+from app.model import settings
+from app.model.utils import utils_json as json
+
+load_dotenv(settings.ENV_PATH)
 
 
 class User(BaseModel):
@@ -16,19 +16,31 @@ class User(BaseModel):
     login: str
 
     def __init__(self, **kwargs):
-        kwargs = json.read(PROFILE_JSON, "PROFILE_JSON")
+        kwargs = json.read(settings.PROFILE_JSON, "PROFILE_JSON")
         super().__init__(**kwargs)
 
     def save(self):
         data = self.model_dump(mode='json')
-        json.write(PROFILE_JSON, data, "PROFILE_JSON")
+        json.write(settings.PROFILE_JSON, data, "PROFILE_JSON")
 
     @property
     def password(self):
-        ...
+        return keyring.get_password(os.getenv("SERVICE_NAME"), self.login)
+    
+    @password.setter
+    def password(self, value):
+        keyring.set_password(os.getenv("SERVICE_NAME"), self.login, value)
 
     def clear(self):
-        ...
+        try:
+            keyring.delete_password(os.getenv("SERVICE_NAME"), self.login)
+        except keyring.errors.PasswordDeleteError:
+            pass #  пароля вже не має 
+
+        self.auto_off = False
+        self.schedule_url = HttpUrl("http://www.rozklad.hneu.edu.ua/schedule/schedule?group=-1&student=-1")
+        self.login = ""
+        self.save() 
     
     class Config:
         extra = "allow"

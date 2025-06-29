@@ -30,13 +30,11 @@ class Run:
         web_driver = None
         zoom = None
 
-        await self.notify("status_changed", {"status":"в процесі..."})
-
         user = User()
-        log.info('try running the script...')
+        log.info('спроба запуску сценарію...')
         try:
             if not utils.check_installed_app(settings.FIREFOX_PATHS):
-                log.error('не знайдено браузер Firefox. Програма продовжувати роботу не буде')
+                log.error('не знайдено браузер Firefox')
                 return
 
             if not user.login:
