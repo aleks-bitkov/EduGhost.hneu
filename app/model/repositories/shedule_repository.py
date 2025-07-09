@@ -3,6 +3,7 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
+from pydantic import HttpUrl
 from transliterate import translit
 
 from app.logger import log
@@ -13,7 +14,7 @@ from app.model.utils.common_utils import get_kyiv_now
 
 
 class ScheduleRepository:
-    def __init__(self, url: str):
+    def __init__(self, url: HttpUrl):
         if not url:
             log.error('немає посилання на розклад')
             return
@@ -89,7 +90,7 @@ class ScheduleRepository:
             (
                 name='ТЕОРІЯ ЙМОВІРНОСТЕЙ ТА МАТЕМАТИЧНА СТАТИСТИКА', 
                 type='laboratory', 
-                start='18:12', 
+                start='10:09',
                 end='23:59'
             ),
             Lesson

@@ -1,4 +1,7 @@
+import copy
+
 from selenium import webdriver
+from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.firefox.service import Service as ServiceFirefox
 
 from app.logger import log
@@ -15,16 +18,21 @@ class SeleniumManager:
             log.error('не знайдено виконуваний файл браузера')
 
         self._service = ServiceFirefox(executable_path=settings.DRIVER_FILE)
-        self._options = settings.FIREFOX_OPTIONS
+        self._options = copy.deepcopy(settings.FIREFOX_OPTIONS)
+        self._options.binary_location = self._binary_browser
     
     @property
     async def driver(self):
-        if not self._driver:
-            self._driver = webdriver.Firefox(
-                service=self._service, 
-                options=self._options
-            )
-        return self._driver
+        try:
+            if not self._driver:
+                self._driver = webdriver.Firefox(
+                    service=self._service,
+                    options=self._options,
+
+                )
+            return self._driver
+        except SessionNotCreatedException:
+            log.critical('не знайдено застосунок Firefox. Встановіть та/або оновіть шляхи до застосунку')
     
     def is_driver_available(self) -> bool:
         return self._driver is not None

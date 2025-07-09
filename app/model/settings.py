@@ -2,7 +2,7 @@ from pathlib import Path
 
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path.cwd().parent.parent
 MODEL_DIR = BASE_DIR.joinpath('app', 'model')
 DATA_DIR = MODEL_DIR.joinpath('data')
 DRIVER_FILE = MODEL_DIR.joinpath('drivers', 'geckodriver')
@@ -47,13 +47,13 @@ DEFAULT_PATHS_FIREFOX = [
     ...
 ]
 
-FIREFOX_PATHS = DEFAULT_PATHS_FIREFOX #  TODO: кастомний шлял для застосунку
+FIREFOX_PATHS = DEFAULT_PATHS_FIREFOX #  TODO: кастомний шлял до застосунку
 
 FIREFOX_OPTIONS = FirefoxOptions()
 FIREFOX_OPTIONS.set_preference("network.protocol-handler.external.zoommtg", True)
 FIREFOX_OPTIONS.set_preference("network.protocol-handler.expose.zoommtg", True)
 FIREFOX_OPTIONS.set_preference("network.protocol-handler.warn-external.zoommtg", False)
-# FIREFOX_OPTIONS.add_argument("--headless")
+FIREFOX_OPTIONS.add_argument("--headless")
 
 
 #  конфігурація для Zoom

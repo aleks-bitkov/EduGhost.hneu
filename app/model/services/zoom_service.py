@@ -53,7 +53,7 @@ class ZoomService:
         except psutil.NoSuchProcess:
             log.info('Zoom вже завершено/не запущено')
         except Exception:
-            log.exception('невідома помилка при завершені Zoom процесу')
+            log.exception('невідома помилка при завершені процесу Zoom')
 
     async def kill(self):
         pid = await self.is_running()

@@ -24,7 +24,8 @@ class Run:
     tasks = []
     error = False
 
-    async def run(self):
+    @classmethod
+    async def run(cls):
         web_driver = None
         zoom = None
 
@@ -71,13 +72,12 @@ class Run:
             pns = PnsRepository(username=user.login, password=password, web_driver=web_driver)
             am = LessonManager(pns, zoom, schedule)
 
-
             t1 = asyncio.create_task(am.zoom_meet_processing(), name="zoom_meet_processing")
             t2 = asyncio.create_task(am.attendance_processing(), name="attendance_processing")
-            Run().tasks = [t1, t2]
+            cls.tasks = [t1, t2]
 
             try:
-                results = await asyncio.gather(*Run().tasks, return_exceptions=True)
+                results = await asyncio.gather(*cls.tasks, return_exceptions=True)
 
 
                 for i, result in enumerate(results):
@@ -97,15 +97,15 @@ class Run:
 
             except asyncio.CancelledError:
                 log.warning('було прервано головний потік')
-                for task in Run().tasks:
+                for task in cls.tasks:
                     task.cancel()
-                await asyncio.gather(*Run().tasks, return_exceptions=True)
+                await asyncio.gather(*cls.tasks, return_exceptions=True)
                 raise
 
         except CancelledError:
             log.warning('було преравно виконання сценарію')
         except Exception:
-            Run().error = True
+            cls.error = True
             log.exception('невідома помилка при запуску/виконанні сценарію')
         finally:
 
@@ -122,23 +122,29 @@ class Run:
                 log.warning('автоматичне виключення ПК не увімкнено')
                 utils.allow_sleep()
 
-            Run().running = False
+            cls.running = False
             time.sleep(2)
             if zoom:
                 await zoom.kill()
                 time.sleep(8)
                 await zoom.kill()
 
-            if not Run().error:
-                log.info('сценарій було завршено без помилок')
+            if not cls.error:
+                log.info('сценарій було завершено без помилок')
+            else:
+                log.info("сценарій було завершено з помилками")
 
     @classmethod
     async def start(cls):
-        if not cls.running:
-            cls.running = True
-            cls.main_task = asyncio.create_task(Run().run())
-        else:
-            log.info('сценарій вже запущено')
+        try:
+            if not cls.running:
+                cls.running = True
+                cls.main_task = asyncio.create_task(cls.run())
+                await cls.main_task                         # TODO: ВИКЛЮЧНО ДЕБАГ РЕЖИМ
+            else:
+                log.info('сценарій вже запущено')
+        except Exception:
+            log.exception("невідома помилка при старті")
 
     @classmethod
     async def stop(cls):
@@ -152,4 +158,4 @@ class Run:
             log.info("сценарій було успішно зупинено")
             cls.running = False
 
-asyncio.run(Run().run())
+asyncio.run(Run().start())

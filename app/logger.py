@@ -1,5 +1,6 @@
 import logging
 import sys
+
 from colorama import Back, Fore, Style, init
 
 init(autoreset=True)
@@ -29,13 +30,13 @@ def setup_colored_logging(app_debug_level=logging.DEBUG, third_party_level=loggi
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
 
-    file_formatter = logging.Formatter(
+    file_formatter = logging.Formatter( # noqa: F841
         fmt='[%(asctime)s] |%(levelname)8s| line:%(lineno)-4d| %(module)-25s | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
     file_handler = logging.FileHandler('app.log', encoding='utf-8')
-    file_handler.setFormatter(file_formatter)
+    # file_handler.setFormatter(file_formatter)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(third_party_level)
@@ -43,38 +44,15 @@ def setup_colored_logging(app_debug_level=logging.DEBUG, third_party_level=loggi
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
 
-    # third_party_loggers = [
-    #     'selenium',
-    #     'urllib3',
-    #     'requests',
-    #     'connectionpool',
-    #     'selenium.webdriver.remote.remote_connection',
-    #     'selenium.webdriver.common.service',
-    # ]
-    
-    # for logger_name in third_party_loggers:
-    #     logging.getLogger(logger_name).setLevel(third_party_level)
-
     return root_logger
 
 def get_app_logger(name):
-    """
-    Получить логгер для вашего приложения с debug уровнем
-    
-    Args:
-        name: Имя модуля (обычно __name__)
-    
-    Returns:
-        logging.Logger: Настроенный логгер
-    """
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)  # Ваше приложение может использовать DEBUG
+    logger.setLevel(logging.DEBUG)
     return logger
 
-# Настройка логирования
 setup_colored_logging()
 
-# Создание логгера для вашего приложения
 log = get_app_logger(__name__)
 
 if __name__ == "__main__":

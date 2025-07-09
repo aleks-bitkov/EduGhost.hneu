@@ -77,7 +77,6 @@ class TestLessonManager:
             
             result = await lesson_manager.get_lesson_status(lesson)
             
-            # Метод возвращает кортеж (status, now, start, end)
             assert isinstance(result, tuple)
             assert len(result) == 4
             

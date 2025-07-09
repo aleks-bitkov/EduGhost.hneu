@@ -1,17 +1,13 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.logger import log
 from app.model import settings
-from app.model.repositories.pns_repository import PnsRepository
 from app.model.schemas.lesson_shcema import Lesson
 from app.model.schemas.link_schema import Link
 from app.model.schemas.scedule_schema import Schedule
-from app.model.schemas.user_shcema import User
-from app.model.services.zoom_service import ZoomService
 from app.model.utils import common_utils as utils
 from app.model.utils import utils_json as json
-from app.model.utils.selenium_manager import SeleniumManager
 
 
 class LessonManager:
@@ -50,7 +46,7 @@ class LessonManager:
         log_prefix = ""
 
         #  ====================================================================
-        """  TODO: читання відбуваеться вне залежності від змін
+        """  TODO: читання відбувається вне залежності від змін
             можна використати прапорець, який повідомить чи була зміна у файлі
         """
         temp = json.read(settings.LINKS_JSON)
@@ -93,9 +89,11 @@ class LessonManager:
             log.info("пара %r ще не почалась", lesson.name)
             log.debug("зараз %s, початок о %s", str(start), str(now))
             difference = start - now
-            seconds_left = int(difference.total_seconds()) + 300
+            seconds_left = int(difference.total_seconds()) # + 300
 
-            log.info("очікуємо до %s. Залишилось ≈ %s", lesson.start, utils.format_time(seconds_left))
+            log_start_time = (start + timedelta(seconds=300)).strftime("%H:%M")
+
+            log.info("очікуємо до %s. Залишилось ~ %s", log_start_time, utils.format_time(seconds_left))
            
             await asyncio.sleep(seconds_left)
         else:
@@ -113,7 +111,7 @@ class LessonManager:
         to_end_lesson = int((end - now).total_seconds()) - 900
 
         if to_end_lesson <= 600:
-            log.info("до кінця %r залишилось ≤ 10 хвилин. пропускаємо цю пару", lesson.name)
+            log.info("до кінця %r залишилось <= 10 хвилин. пропускаємо цю пару", lesson.name)
             return
 
         if activity_type == "meeting":
@@ -143,3 +141,39 @@ class LessonManager:
 
         for lesson in self.lessons:
             await self.handle_lesson_activity(lesson, "attendance")
+
+
+# user = User()
+# selenium_manager = SeleniumManager()
+# web_driver = asyncio.run(selenium_manager.driver)
+
+# zoom = ZoomService(web_driver)
+# pns = PnsRepository(username=user.login, password=user.password, web_driver=web_driver)
+
+
+# lessons=[
+#     Lesson
+#     (
+#         name='ТЕОРІЯ ЙМОВІРНОСТЕЙ ТА МАТЕМАТИЧНА СТАТИСТИКА', 
+#         type='laboratory', 
+#         start='18:12', 
+#         end='23:59'
+#     ),
+#     Lesson
+#     (
+#         name='ФІЛОСОФІЯ',
+#         type='practice',
+#         start='12:10', 
+#         end='23:59'
+#     )
+# ]
+
+# schedule = Schedule(lessons=lessons)
+
+# lm = LessonManager(pns_repo=pns, zoom_service=zoom, schedule=schedule)
+
+# async def foo:
+#     t1 = asyncio.create_task(lm.attendance_processing())
+#     t2 = asyncio.create_task(lm.zoom_meet_processing())
+
+#     asyncio.gather(t1, t2)
