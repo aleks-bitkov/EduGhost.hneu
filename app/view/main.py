@@ -1,6 +1,6 @@
 import flet as ft
 
-from app.view.run import MainApp
+from view.run import MainApp
 
 async def main(page: ft.Page):
     MainApp(page)

@@ -1,4 +1,7 @@
-from model.settings import PROFILE_JSON
-from model.utils import utils_json as json
+import flet as ft
+from view.run import MainApp
 
-print(json.read(PROFILE_JSON, "PROFILE_JSON"))
+async def main(page: ft.Page):
+    MainApp(page)
+
+ft.app(target=main)

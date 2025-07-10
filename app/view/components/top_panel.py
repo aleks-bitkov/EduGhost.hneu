@@ -1,11 +1,16 @@
+from collections.abc import Callable
 
 import flet as ft
+from view.components import commons
 
 
 class TopPanel(ft.WindowDragArea):
 
-    def __init__(self, page):
+    def __init__(self, page, switch_content: Callable = None, add_button: Callable = None):
         super().__init__(page)
+        self.switch_content = switch_content
+        self.add_button = add_button
+
         self.content = self._content()
         self.page = page
         self.maximizable = False
@@ -26,43 +31,38 @@ class TopPanel(ft.WindowDragArea):
 
 
     def _options(self):
-        button_script = ft.TextButton(
-            content=ft.Text(
-                value="Скрипт",
-                size=18,
-                color=ft.Colors.WHITE,
-            ),
-            style=ft.ButtonStyle(
-                overlay_color=ft.Colors.TRANSPARENT,  # отключаем фон при наведении
-                text_style={
-                    ft.ControlState.DEFAULT: ft.TextStyle(decoration=ft.TextDecoration.NONE),
-                    ft.ControlState.HOVERED: ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE),
-                },
-            ),
-            on_hover=lambda e: self.work_with_script(e),
+        button_home = commons.NavButton(
+            icon=ft.Icons.HOME,
+            view="home",
+            tooltip="Головна",
+            on_click=self.switch_content,
+            active=True,
+        )
+        button_settings = commons.NavButton(
+            icon=ft.Icons.SETTINGS,
+            view="settings",
+            tooltip="Налаштування",
+            on_click=self.switch_content,
+            active=False,
         )
 
-        button_settings = ft.TextButton(
-            content=ft.Text(
-                value="Налаштування",
-                size=18,
-                color=ft.Colors.WHITE,
-            ),
+        button_script = ft.IconButton(
+            icon=ft.Icons.TERMINAL,
+            tooltip="Дії застосунку",
             style=ft.ButtonStyle(
-                overlay_color=ft.Colors.TRANSPARENT,  # отключаем фон при наведении
-                text_style={
-                    ft.ControlState.DEFAULT: ft.TextStyle(decoration=ft.TextDecoration.NONE),
-                    ft.ControlState.HOVERED: ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE),
-                },
+                overlay_color=ft.Colors.TRANSPARENT,  # убираем подсветку при наведении
             ),
-            on_click=lambda e: self.work_with_settings(e),
         )
+
+        self.add_button("home", button_home)
+        self.add_button("settings", button_settings)
 
         options = ft.Container(
             padding=ft.padding.only(left=25),
             content=ft.Row([
-                button_script,
+                button_home,
                 button_settings,
+                button_script,
             ])
         )
 
@@ -72,7 +72,9 @@ class TopPanel(ft.WindowDragArea):
         ...
 
     def work_with_settings(self, e=None):
-        ...
+        self.main_content.content = self.settings_view
+        self.page.update()
+
 
     def closed_minimized(self):
         button_minimize = ft.IconButton(

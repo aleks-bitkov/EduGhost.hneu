@@ -1,7 +1,7 @@
 import flet as ft
 
-from app.view.components.mixins import PaddingContainer
-from app.view.components.title import Title
+from view.components.commons import PaddingContainer
+from view.components.title import Title
 
 
 class MainView(PaddingContainer, ft.Container):
@@ -56,7 +56,7 @@ class MainView(PaddingContainer, ft.Container):
         button_add = ft.IconButton(
             icon=ft.Icons.ADD,
             icon_color=ft.Colors.WHITE,
-            # icon_size=31,
+            tooltip="Додати посилання"
 
         )
 

@@ -11,6 +11,10 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+dependencies = [
+  "flet"
+]
+
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -49,3 +53,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.flet.app]
+path = "app"

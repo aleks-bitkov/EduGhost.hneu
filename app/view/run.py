@@ -1,16 +1,23 @@
 import flet as ft
 
-from app.view import colors
-from app.view.components.top_panel import TopPanel
-from app.view.views.main_view import MainView
+from view import colors
+from view.components.top_panel import TopPanel
+from view.views.main_view import MainView
+
+from view.views.settings_view import SettingsView
+from logger import log
+
 
 
 class MainApp:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.current_view = "main"
-        self.top_panel = TopPanel(self.page)
+        self.content_view = MainView() # Default
+        self.buttons = {}
+
+        self.top_panel = TopPanel(self.page, self.switch_content, self.add_button)
         self.setup_page()
+
 
     def setup_page(self):
         self.page.window.always_on_top = True
@@ -37,15 +44,24 @@ class MainApp:
         self.create_layout()
 
     def create_layout(self):
-
-
-        main_column = ft.Column([
-            self.top_panel,
-            self.get_main_content()
-        ])
-
+        main_column = ft.Column([self.top_panel, self.content_view])
         self.page.add(main_column)
 
-    @staticmethod
-    def get_main_content():
-        return MainView()
+    def add_button(self, key, button):
+        self.buttons[key] = button
+
+    def switch_content(self, e):
+        if not e:
+            log.error('не отримано даних для зміни представлення')
+
+        new_view = e.control.data['view']
+
+        if new_view == "home":
+            self.content_view.content = MainView()
+        elif new_view == "settings":
+            self.content_view.content = SettingsView()
+
+        for view_name, button in self.buttons.items():
+            button.set_active(view_name == new_view)
+
+        self.page.update()
