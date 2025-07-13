@@ -2,16 +2,16 @@ import os
 
 import keyring
 from dotenv import load_dotenv
+from model import settings
+from model.utils import utils_json as json
 from pydantic import BaseModel, HttpUrl
-
-from app.model import settings
-from app.model.utils import utils_json as json
 
 load_dotenv(settings.ENV_PATH)
 
 
 class User(BaseModel):
     auto_off : bool
+    auto_start: bool
     schedule_url: HttpUrl
     login: str
 

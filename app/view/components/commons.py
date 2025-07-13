@@ -1,6 +1,5 @@
 import flet as ft
-from logger import log
-from view.views.settings_view import SettingsView
+
 
 class PaddingContainer(ft.Container):
     def __init__(self):
@@ -30,6 +29,9 @@ class NavButton(ft.IconButton):
             ft.ControlState.FOCUSED: ft.Colors.WHITE if active else ft.Colors.RED,
         }
         self.update()
+
+
+
 
 def about_more_msg(msg):
     return ft.Text(

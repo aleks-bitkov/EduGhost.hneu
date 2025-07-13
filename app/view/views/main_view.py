@@ -1,35 +1,52 @@
-import flet as ft
+from collections.abc import Callable
 
+import flet as ft
+from controler.common import get_today_schedule
 from view.components.commons import PaddingContainer
 from view.components.title import Title
 
 
 class MainView(PaddingContainer, ft.Container):
-    def __init__(self):
+    def __init__(self, switch_content: Callable, add_button: Callable, page:ft.Page, service_link=None):
         super().__init__()
+        self.switch_content = switch_content
+        self.service_link = service_link
+        self.page = page
+        self.add_button = add_button
+        self.column_cards = ft.Column([]) # empty, initialization
+
         self.content = self._content()
 
+    @property
+    def subjects_name(self):
+        return list(self.service_link.get_subjects_name()) if self.service_link else []
+
     def _content(self):
-        return ft.Container(
-            content=ft.Row([
-                self._left_column(),
-                self._right_column()
-            ],
-            expand=True,
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.START)
+        stack = ft.Stack(
+            [
+                ft.Container(
+                    content=ft.Row(
+                        [self._left_column(), self._right_column()],
+                        expand=True,
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                    )
+                ),
+                # ft.Container(width=600, height=100, top=0, left=300, content=ft.ListView()),
+            ]
         )
+
+
+        return stack
 
     def _left_column(self):
         title = Title("Розклад на сьогодні")
 
-        cards = []
+        schedule = get_today_schedule()
+        lessons = []
 
-        for i in range(10):
-            cards.append(self.create_lesson_card(i+1, f"Філософія {i+1}", f"0{i+2}:0{i+5}", f"0{i+3}:{i+10}"))
-
-        if not cards:
-            cards.append(
+        if not schedule:
+            lessons.append(
                 ft.Text(
                     value='На сьогодні пар немає, відпочиваємо 🥳',
                     size=30,
@@ -38,12 +55,25 @@ class MainView(PaddingContainer, ft.Container):
                     selectable=True,
                 )
             )
+            return None
+
+
+        for lesson in schedule.lessons:
+            item = self.create_lesson_card(
+                lesson.type[:2],
+                lesson.name,
+                lesson.start,
+                lesson.end
+            )
+
+            lessons.append(item)
+
 
         content = ft.Column([
             ft.Row([title,]),
             ft.Divider(height=15),
             ft.Column(
-                cards,
+                lessons,
                 scroll=ft.ScrollMode.ALWAYS,
                 height=480
             )
@@ -56,16 +86,25 @@ class MainView(PaddingContainer, ft.Container):
         button_add = ft.IconButton(
             icon=ft.Icons.ADD,
             icon_color=ft.Colors.WHITE,
-            tooltip="Додати посилання"
-
+            tooltip="Додати посилання",
+            data={"view": "links"},
+            on_click=self.switch_content,
         )
+        self.add_button("links", button_add)
 
         cards = []
 
-        for i in range(10):
+        for subject_name in self.subjects_name:
             cards.append(
-                self.create_link_card(f"Філософія {i+1}")
+                self.create_link_card(subject_name)
             )
+
+        if not cards:
+            cards.append(
+                ft.Text("Посилання поки не додані")
+            )
+
+        self.column_cards = ft.Column(controls=cards, scroll=ft.ScrollMode.ALWAYS, height=480)
 
         content = ft.Column(
             [
@@ -76,12 +115,14 @@ class MainView(PaddingContainer, ft.Container):
                     ],
                     expand=True,
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    width=500,
+                    vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                    width=540,
                 ),
                 ft.Divider(height=15),
-                ft.Column(cards, scroll=ft.ScrollMode.ALWAYS, height=480),
+                self.column_cards
             ]
         )
+        self.page.update()
         return content
 
     def create_lesson_card(self, number, lesson_name, lesson_start, lesson_end):
@@ -121,9 +162,21 @@ class MainView(PaddingContainer, ft.Container):
         return card
 
     def create_link_card(self, lesson_name):
-        data = {
-            "lesson_name": lesson_name,
-        }
+        button_edit = ft.IconButton(
+            icon=ft.Icons.EDIT,
+            data={"view": "edit", "lesson_name": lesson_name},
+            on_click=self.switch_content,
+        )
+        self.add_button("edit", button_edit)
+
+        button_delete = ft.IconButton(
+            icon=ft.Icons.DELETE,
+            data={"view": "home", "lesson_name": lesson_name},
+            on_click=lambda e: self.service_link.delete(e, self.switch_content),
+        )
+
+        self.add_button("delete", button_delete)
+
         card = ft.Container(
             bgcolor="#413D3D",
             width=540,
@@ -144,8 +197,8 @@ class MainView(PaddingContainer, ft.Container):
                     ),
                     ft.Container(
                         content=ft.Row([
-                            ft.IconButton(icon=ft.Icons.EDIT, data=data),
-                            ft.IconButton(icon=ft.Icons.DELETE, data=data),
+                            button_edit,
+                            button_delete,
                         ])
                     )
                 ],

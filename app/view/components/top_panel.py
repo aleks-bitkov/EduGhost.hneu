@@ -46,13 +46,18 @@ class TopPanel(ft.WindowDragArea):
             active=False,
         )
 
-        button_script = ft.IconButton(
+        button_script = ft.PopupMenuButton(
             icon=ft.Icons.TERMINAL,
-            tooltip="Дії застосунку",
-            style=ft.ButtonStyle(
-                overlay_color=ft.Colors.TRANSPARENT,  # убираем подсветку при наведении
-            ),
+            icon_color=ft.Colors.GREY,
+            menu_position=ft.PopupMenuPosition.UNDER,
+            items=[
+                ft.PopupMenuItem(text="Item 1"),
+                ft.PopupMenuItem(text="Item 2"),
+            ],
+            on_open=self.on_open_menu,
+            on_cancel=self.on_cancel_menu
         )
+
 
         self.add_button("home", button_home)
         self.add_button("settings", button_settings)
@@ -67,14 +72,6 @@ class TopPanel(ft.WindowDragArea):
         )
 
         return options
-
-    def work_with_script(self, e=None):
-        ...
-
-    def work_with_settings(self, e=None):
-        self.main_content.content = self.settings_view
-        self.page.update()
-
 
     def closed_minimized(self):
         button_minimize = ft.IconButton(
@@ -100,3 +97,13 @@ class TopPanel(ft.WindowDragArea):
     def minimize(self, e=None):
         self.page.window.minimized = True if self.page.window.minimized else False
         self.page.update()
+
+    @staticmethod
+    def on_open_menu(e):
+        e.control.icon_color = ft.Colors.WHITE
+        e.control.update()
+
+    @staticmethod
+    def on_cancel_menu(e):
+        e.control.icon_color = ft.Colors.GREY
+        e.control.update()

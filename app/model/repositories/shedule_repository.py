@@ -3,17 +3,18 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
+from logger import log
+from model import settings
+from model.schemas.lesson_shcema import Lesson
+from model.schemas.scedule_schema import Schedule
+from model.utils.common_utils import get_kyiv_now
+from model.utils.singleton import Singleton
 from pydantic import HttpUrl
 from transliterate import translit
 
-from app.logger import log
-from app.model import settings
-from app.model.schemas.lesson_shcema import Lesson
-from app.model.schemas.scedule_schema import Schedule
-from app.model.utils.common_utils import get_kyiv_now
 
+class ScheduleRepository(metaclass=Singleton):
 
-class ScheduleRepository:
     def __init__(self, url: HttpUrl):
         if not url:
             log.error('немає посилання на розклад')
@@ -21,19 +22,20 @@ class ScheduleRepository:
 
         self.url = url
         self.soup = self._get_soup()
+        self.schedule = None
         # self.day_index = self._find_today_index()
         self.day_index = 4
 
     def _get_soup(self):
         try:
-            response = requests.get(self.url)
+            response = requests.get(str(self.url))
             return BeautifulSoup(response.text, "lxml")
         except requests.exceptions.ConnectionError:
             log.exception("помилка при з'єднанні")
         except Exception:
             log.exception("невідома помилка при отриманні розкладу")
             log.debug("зупинка парсеру...")
-            return
+        return None
 
     @staticmethod
     def _get_current_date():
@@ -43,7 +45,7 @@ class ScheduleRepository:
         year = now.strftime("%Y")
         return f"{day} {settings.MONTH_MAP[month_en]} {year}".lower().lstrip("0")
 
-    #  TODO: можна оптимізувти. поточний іденкс це номер дня тиждня, наприклад, четверг - 4, вівторок - 2...
+    #  TODO: можна оптимізувати. поточний індекс це номер дня тижня, наприклад, четверг - 4, вівторок - 2...
     def _find_today_index(self):
         schedule_table = self.soup.find("table")
         if not schedule_table:
@@ -85,28 +87,40 @@ class ScheduleRepository:
         return lesson_data
 
     def generate_schedule(self) -> Schedule | None:
-        lessons=[
-            Lesson
-            (
-                name='ТЕОРІЯ ЙМОВІРНОСТЕЙ ТА МАТЕМАТИЧНА СТАТИСТИКА', 
-                type='laboratory', 
-                start='10:09',
-                end='23:59'
-            ),
-            Lesson
-            (
-                name='ФІЛОСОФІЯ',
-                type='practice',
-                start='12:10', 
-                end='23:59'
-            )
-        ]
 
+        lesson_1 = Lesson(
+            name="Lesson 1",
+            type="practice",
+            start="12:10",
+            end="23:59"
+        )
+
+        lesson_2 = Lesson(
+            name="Lesson 2",
+            type="lecture",
+            start="13:10",
+            end="23:59"
+        )
+
+        lesson_3 = Lesson(
+            name="Lesson 3",
+            type="laboratory",
+            start="14:10",
+            end="23:59"
+        )
+
+        lessons = [lesson_1, lesson_2, lesson_3]
         return Schedule(lessons=lessons)
 
+
+
+
+        if self.schedule:
+            return self.schedule
+
         if self.day_index is None:
-            log.error("не знайдено index сьогоднішнього дня")
-            log.debug("можлива помилка з сайтом розкладу")
+            log.error("не знайдено сьогоднішній розклад")
+            log.debug("можлива помилка з сайтом")
             return None
 
         lessons = []
@@ -155,4 +169,5 @@ class ScheduleRepository:
                         log.error('не знайдено відповідності до типу пари, тип пари = %r', subject_type)
 
                     lessons.append(Lesson(name=item["name"], type=subject_type, start=start_time, end=end_time))
-        return Schedule(lessons=lessons)
+        self.schedule = Schedule(lessons=lessons)
+        return self.schedule

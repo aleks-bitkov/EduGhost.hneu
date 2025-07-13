@@ -1,7 +1,6 @@
 
+from model.schemas.lesson_shcema import Lesson
 from pydantic import BaseModel
-
-from app.model.schemas.lesson_shcema import Lesson
 
 
 class Schedule(BaseModel):

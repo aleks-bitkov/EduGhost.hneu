@@ -1,19 +1,20 @@
 import flet as ft
-
+from logger import log
 from view import colors
 from view.components.top_panel import TopPanel
+from view.views.link_views import LinkView
 from view.views.main_view import MainView
-
 from view.views.settings_view import SettingsView
-from logger import log
-
 
 
 class MainApp:
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, user_service, link_service):
         self.page = page
-        self.content_view = MainView() # Default
+        self.user_service = user_service
+        self.link_service = link_service
         self.buttons = {}
+        self.content_view = MainView(self.switch_content, self.add_button, self.page, self.link_service) # Default
+
 
         self.top_panel = TopPanel(self.page, self.switch_content, self.add_button)
         self.setup_page()
@@ -57,11 +58,22 @@ class MainApp:
         new_view = e.control.data['view']
 
         if new_view == "home":
-            self.content_view.content = MainView()
+            self.content_view.content = MainView(self.switch_content, self.add_button, self.page, self.link_service)
         elif new_view == "settings":
-            self.content_view.content = SettingsView()
+            self.content_view.content = SettingsView(self.user_service)
+        elif new_view == "links":
+            self.content_view.content = LinkView(self.link_service, switch_content=self.switch_content)
+        elif new_view == "edit":
+            lesson_name = e.control.data.get('lesson_name', "")
+            subject_info = self.link_service.get_data_about_subject(subject=lesson_name)
+            self.content_view.content = LinkView(self.link_service, subject_info, lesson_name, True, self.switch_content)
+
+        else:
+            log.error("не зрозуміле представлення = %r", new_view)
 
         for view_name, button in self.buttons.items():
+            if view_name == "links" or view_name == "edit" or view_name == "delete":
+                continue
             button.set_active(view_name == new_view)
 
         self.page.update()

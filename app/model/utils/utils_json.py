@@ -2,7 +2,7 @@ import functools
 import json
 from collections.abc import Callable
 
-from app.logger import log
+from logger import log
 
 
 def handle_file_errors(operation_name: str, default_return=None):

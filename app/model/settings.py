@@ -2,7 +2,7 @@ from pathlib import Path
 
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-BASE_DIR = Path.cwd().parent.parent
+BASE_DIR = Path.cwd().parent
 MODEL_DIR = BASE_DIR.joinpath('app', 'model')
 DATA_DIR = MODEL_DIR.joinpath('data')
 DRIVER_FILE = MODEL_DIR.joinpath('drivers', 'geckodriver')

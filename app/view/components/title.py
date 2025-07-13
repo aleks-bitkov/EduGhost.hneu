@@ -1,5 +1,6 @@
 import flet as ft
 
+
 class Title(ft.Text):
     def __init__(self, value):
         super().__init__()
